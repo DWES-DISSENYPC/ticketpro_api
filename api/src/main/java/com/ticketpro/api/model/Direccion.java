@@ -1,11 +1,15 @@
 package com.ticketpro.api.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "direcciones")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Direccion {
 
     @Id

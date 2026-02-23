@@ -1,7 +1,10 @@
 package com.ticketpro.api.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,6 +12,8 @@ import java.util.List;
 @Entity
 @Table(name = "usuarios")
 @Data // Genera getters, setters, toString, etc. automáticamente
+@NoArgsConstructor
+@AllArgsConstructor
 public class Usuario {
 
     @Id
