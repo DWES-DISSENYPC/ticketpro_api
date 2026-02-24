@@ -66,6 +66,7 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()    // Rutas para login/registro libres
                 .requestMatchers("/api/eventos/**").permitAll() // Ver eventos es libre
+                .requestMatchers("/api/sesiones/**").permitAll()    // Vers sesines es libre
                 .anyRequest().authenticated()                  // El resto, con Token
             );
 
