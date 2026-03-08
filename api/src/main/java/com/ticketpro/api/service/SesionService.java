@@ -6,48 +6,53 @@ import com.ticketpro.api.model.Sesion;
 import com.ticketpro.api.repository.SesionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class SesionService {
 
     @Autowired
-    private SesionRepository sesionRepo;
+    private SesionRepository sesionRepository;
 
+    @Transactional(readOnly = true)
     public List<SesionDTO> obtenerSesionesPorEvento(Long eventoId) {
-        List<Sesion> sesiones = sesionRepo.findByEventoId(eventoId);
-        
-        if (sesiones.isEmpty()) {
-            throw new RecursoNoEncontrado("No hay sesiones disponibles para el evento: " + eventoId);
-        }
-
-        List<SesionDTO> sesionesDTO = new ArrayList<>();
-
-        for (Sesion s : sesiones) {
-            sesionesDTO.add(entityDto(s));
-        }
-
-        return sesionesDTO;
+        List<Sesion> sesiones = sesionRepository.findByEventoId(eventoId);
+        return sesiones.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    private SesionDTO entityDto(Sesion s) {
+    @Transactional(readOnly = true)
+    public SesionDTO obtenerSesionPorId(Long id) {
+        Sesion sesion = sesionRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontrado("No se encontró la sesión con ID: " + id));
+        return convertToDTO(sesion);
+    }
+
+    /**
+     * Mapea manualmente la entidad al DTO aplanado.
+     * Esto evita que Angular tenga que conocer la estructura interna de Sala y Ubicacion.
+     */
+    private SesionDTO convertToDTO(Sesion sesion) {
         SesionDTO dto = new SesionDTO();
-        dto.setId(s.getId());
-        dto.setFechaHora(s.getFechaHora());
-        dto.setPrecioBase(s.getPrecioBase());
-        dto.setEntradasVendidas(s.getEntradasVendidas());
-        dto.setEstado(s.getEstado());
-        
-        // Accedemos a las relaciones para "aplanar" el objeto
-        if (s.getSala() != null) {
-            dto.setNombreSala(s.getSala().getNombre());
-            dto.setCapacidadSala(s.getSala().getCapacidad());
+        dto.setId(sesion.getId());
+        dto.setFechaHora(sesion.getFechaHora());
+        dto.setPrecioBase(sesion.getPrecioBase());
+        dto.setEntradasVendidas(sesion.getEntradasVendidas());
+        dto.setEstado(sesion.getEstado());
+
+        // Extraemos datos de la Sala (navegación segura)
+        if (sesion.getSala() != null) {
+            dto.setNombreSala(sesion.getSala().getNombre());
+            dto.setCapacidadSala(sesion.getSala().getCapacidad());
             
-            if (s.getSala().getUbicacion() != null) {
-                dto.setNombreUbicacion(s.getSala().getUbicacion().getNombre());
-                dto.setCiudadUbicacion(s.getSala().getUbicacion().getCiudad());
+            // Extraemos datos de la Ubicación desde la Sala
+            if (sesion.getSala().getUbicacion() != null) {
+                dto.setNombreUbicacion(sesion.getSala().getUbicacion().getNombre());
+                dto.setCiudadUbicacion(sesion.getSala().getUbicacion().getCiudad());
             }
         }
         return dto;

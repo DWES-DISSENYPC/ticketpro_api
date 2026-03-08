@@ -25,5 +25,10 @@ public class SesionController {
         return ResponseEntity.ok(sesiones);
     }
     
-    
+    // GET /api/sesiones/{id} - Detalle de una sesión específica para el formulario de compra
+    @GetMapping("/{id}")
+    public ResponseEntity<SesionDTO> obtenerDetalle(@PathVariable Long id) {
+        SesionDTO sesion = sesionService.obtenerSesionPorId(id);
+        return ResponseEntity.ok(sesion);
+    }
 }

@@ -9,4 +9,5 @@ import com.ticketpro.api.model.Sesion;
 public interface SesionRepository extends JpaRepository<Sesion, Long> {
 
     List<Sesion> findByEventoId(Long eventoId);
+
 }

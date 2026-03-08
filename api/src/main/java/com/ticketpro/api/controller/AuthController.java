@@ -1,7 +1,11 @@
 package com.ticketpro.api.controller;
 
+import com.ticketpro.api.dto.RegistroRequestDTO;
 import com.ticketpro.api.security.jwt.JwtUtils;
+import com.ticketpro.api.service.UsuarioService;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,6 +21,7 @@ public class AuthController {
 
     @Autowired
     AuthenticationManager authenticationManager; // El motor que verifica las credenciales
+    UsuarioService usuarioService;
 
     @Autowired
     JwtUtils jwtUtils; // Nuestra herramienta para crear el Token
@@ -44,4 +49,19 @@ public class AuthController {
         
         return response; // Postman recibirá un JSON con el token
     }
+
+    @PostMapping("/logout")
+public ResponseEntity<?> logoutUser() {
+    // En JWT, el servidor no necesita hacer nada especial para invalidar el token
+    // (A menos que uses una "Blacklist" de tokens, que es más avanzado).
+    return ResponseEntity.ok("Sesión cerrada con éxito. El token ya no debe ser utilizado.");
+}
+
+    @PostMapping("/register")
+public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequestDTO registroDTO) {
+ 
+    usuarioService.crearNuevoUsuario(registroDTO);
+
+    return ResponseEntity.ok("Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
+}
 }

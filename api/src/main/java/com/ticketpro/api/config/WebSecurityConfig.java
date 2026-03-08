@@ -39,6 +39,7 @@ public class WebSecurityConfig {
         // Configuramos el codificador de contraseñas
         authProvider.setPasswordEncoder(passwordEncoder());
         
+               
         return authProvider;
     }
 

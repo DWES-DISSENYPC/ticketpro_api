@@ -32,6 +32,3 @@ public class Ticket {
     private Compra compra;
 }
 
-enum EstadoTicket {
-    VALIDO, USADO, ANULADO
-}

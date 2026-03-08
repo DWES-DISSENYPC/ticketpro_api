@@ -9,5 +9,6 @@ import com.ticketpro.api.model.Usuario;
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByUsername(String username);
     Boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
 
 }
