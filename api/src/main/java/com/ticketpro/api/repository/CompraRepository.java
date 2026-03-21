@@ -12,4 +12,8 @@ public interface CompraRepository extends JpaRepository<Compra, Long>{
     Optional<Compra> findByLocalizador(String localizador);
 
     List<Compra> findByUsuarioUsername(String username);
+
+    
+    List<Compra> findByUsuarioIdAndEstado(Long usuarioId, String estado);
+
 }

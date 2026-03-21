@@ -12,12 +12,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticketpro.api.dto.CompraEntradasDTO;
 import com.ticketpro.api.dto.DetalleCompraDTO;
 import com.ticketpro.api.dto.HistorialCompraDTO;
 import com.ticketpro.api.dto.MensajeResponseDTO;
+import com.ticketpro.api.model.Compra;
 import com.ticketpro.api.service.CompraService;
 
 @RestController
@@ -64,5 +66,16 @@ public class CompraController {
         compraService.cancelarCompra(id, userDetails.getUsername());
         return ResponseEntity
                 .ok(new MensajeResponseDTO("Compra cancelada correctamente. El importe será devuelto a su tarjeta."));
+    }
+
+    @GetMapping("/pendientes")
+    public ResponseEntity<List<DetalleCompraDTO>> listarPendientes(@RequestParam Long usuarioId) {
+        List<DetalleCompraDTO> pendientes = compraService.obtenerComprasPendientes(usuarioId);
+        
+        if (pendientes.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+        
+        return ResponseEntity.ok(pendientes);
     }
 }
