@@ -177,7 +177,7 @@ public class CompraService {
     }
 
     public List<DetalleCompraDTO> obtenerComprasPendientes(Long usuarioId) {
-        List<Compra> compras = compraRepository.findByUsuarioIdAndEstado(usuarioId, "PENDIENTE");
+        List<Compra> compras = compraRepository.findByUsuarioIdAndEstadoPago(usuarioId, "PENDIENTE");
         List<DetalleCompraDTO> pendientes = new ArrayList<>();
         for (Compra c : compras) {
 

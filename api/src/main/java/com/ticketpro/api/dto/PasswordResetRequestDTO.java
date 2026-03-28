@@ -7,11 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegistroRequestDTO {
-    private String username;
-    private String password;
+public class PasswordResetRequestDTO {
     private String email;
-    private String nombre;
-    private String dni;
-    private String apellidos;
 }

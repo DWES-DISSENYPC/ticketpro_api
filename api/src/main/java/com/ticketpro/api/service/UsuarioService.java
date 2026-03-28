@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,12 +94,17 @@ public class UsuarioService {
             throw new ConflictoException("El email '" + dto.getEmail() + "' ya está registrado.");
         }
 
+        if (usuarioRepo.existsByDni(dto.getDni())) {
+            throw new ConflictoException("El DNI '" + dto.getDni() + "' ya está registrado.");
+        }
+ 
         // 2. CREACIÓN DE LA ENTIDAD
         Usuario nuevoUsuario = new Usuario();
         nuevoUsuario.setUsername(dto.getUsername());
         nuevoUsuario.setEmail(dto.getEmail());
         nuevoUsuario.setNombre(dto.getNombre());
         nuevoUsuario.setApellidos(dto.getApellidos());
+        nuevoUsuario.setDni(dto.getDni());
 
         // Encriptamos la contraseña antes de guardar
         nuevoUsuario.setPassword(passwordEncoder.encode(dto.getPassword()));
@@ -155,4 +161,32 @@ public class UsuarioService {
 
         return dto;
     }
+
+    // Añadir en UsuarioService.java
+
+public void generarTokenRecuperacion(String email) {
+    Usuario usuario = usuarioRepo.findByEmail(email)
+            .orElseThrow(() -> new RecursoNoEncontrado("No existe un usuario con ese email."));
+
+    // Generamos un token único (puedes usar UUID)
+    String token = UUID.randomUUID().toString();
+    usuario.setPasswordResetToken(token);
+    // Opcional: podrías añadir un campo 'tokenExpiration' en la entidad Usuario
+    usuarioRepo.save(usuario);
+
+    // AQUÍ DEBERÍAS ENVIAR EL EMAIL
+    System.out.println("Enviando email a " + email + " con el token: " + token);
+    // emailService.sendResetPasswordEmail(email, token);
+}
+
+@Transactional
+public void resetearPassword(String token, String nuevaPassword) {
+    Usuario usuario = usuarioRepo.findByPasswordResetToken(token)
+            .orElseThrow(() -> new AccesoDenegadoException("Token de recuperación inválido o expirado."));
+
+    // Encriptamos y guardamos
+    usuario.setPassword(passwordEncoder.encode(nuevaPassword));
+    usuario.setPasswordResetToken(null); // Limpiamos el token tras usarlo
+    usuarioRepo.save(usuario);
+}
 }

@@ -6,14 +6,13 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.ticketpro.api.model.Compra;
+import com.ticketpro.api.model.EstadoPago;
 
-public interface CompraRepository extends JpaRepository<Compra, Long>{
+public interface CompraRepository extends JpaRepository<Compra, Long> {
 
     Optional<Compra> findByLocalizador(String localizador);
 
     List<Compra> findByUsuarioUsername(String username);
 
-    
-    List<Compra> findByUsuarioIdAndEstado(Long usuarioId, String estado);
-
+    List<Compra> findByUsuarioIdAndEstadoPago(Long usuarioId, String estadoPago);
 }

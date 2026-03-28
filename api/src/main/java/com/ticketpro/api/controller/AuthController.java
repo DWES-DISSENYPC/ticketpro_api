@@ -1,5 +1,6 @@
 package com.ticketpro.api.controller;
 
+import com.ticketpro.api.dto.PasswordResetRequestDTO;
 import com.ticketpro.api.dto.RegistroRequestDTO;
 import com.ticketpro.api.security.jwt.JwtUtils;
 import com.ticketpro.api.service.UsuarioService;
@@ -21,6 +22,8 @@ public class AuthController {
 
     @Autowired
     AuthenticationManager authenticationManager; // El motor que verifica las credenciales
+
+    @Autowired
     UsuarioService usuarioService;
 
     @Autowired
@@ -62,6 +65,29 @@ public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequestDTO regist
  
     usuarioService.crearNuevoUsuario(registroDTO);
 
-    return ResponseEntity.ok("Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
+    // Creamos un mapa para que la respuesta sea un JSON: {"message": "..."} para que lo coja bien el cliente
+    Map<String, String> response = new HashMap<>();
+    response.put("message", "Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
+
+    return ResponseEntity.ok(response);
+}
+
+// Añadir en AuthController.java
+
+@PostMapping("/forgot-password")
+public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequestDTO request) {
+    usuarioService.generarTokenRecuperacion(request.getEmail());
+    Map<String, String> res = new HashMap<>();
+    res.put("message", "Si el email existe, se ha enviado un enlace de recuperación.");
+    return ResponseEntity.ok(res);
+}
+
+@PostMapping("/reset-password")
+public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+    // Recibimos token y nueva password del cuerpo de la petición
+    usuarioService.resetearPassword(request.get("token"), request.get("password"));
+    Map<String, String> res = new HashMap<>();
+    res.put("message", "Contraseña actualizada con éxito.");
+    return ResponseEntity.ok(res);
 }
 }
