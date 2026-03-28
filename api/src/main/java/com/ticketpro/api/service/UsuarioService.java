@@ -27,6 +27,9 @@ public class UsuarioService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private EmailService emailService;
+
     public UsuarioUpdateDTO obtenerPerfilCompleto(String username) {
         Usuario u = usuarioRepo.findByUsername(username)
                 .orElseThrow(() -> new RecursoNoEncontrado("Usuario no encontrado con username: " + username));
@@ -176,7 +179,7 @@ public void generarTokenRecuperacion(String email) {
 
     // AQUÍ DEBERÍAS ENVIAR EL EMAIL
     System.out.println("Enviando email a " + email + " con el token: " + token);
-    // emailService.sendResetPasswordEmail(email, token);
+    emailService.enviarCorreoHTML(usuario.getEmail(), token);
 }
 
 @Transactional
@@ -189,4 +192,6 @@ public void resetearPassword(String token, String nuevaPassword) {
     usuario.setPasswordResetToken(null); // Limpiamos el token tras usarlo
     usuarioRepo.save(usuario);
 }
+
+
 }
