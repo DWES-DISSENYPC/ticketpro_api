@@ -4,9 +4,13 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 // Asegúrate de que no haya ningún import que empiece por 'com.sun...' o similar para esta clase
 import com.ticketpro.api.security.jwt.AuthTokenFilter;
 import com.ticketpro.api.security.services.UserDetailsServiceImpl;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +20,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -31,15 +40,14 @@ public class WebSecurityConfig {
     }
 
     // 2. Configuramos el motor que validará usuario y contraseña
-   @Bean
+    @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         // Pasamos directamente el userDetailsService al constructor
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
-        
+
         // Configuramos el codificador de contraseñas
         authProvider.setPasswordEncoder(passwordEncoder());
-        
-               
+
         return authProvider;
     }
 
@@ -55,27 +63,37 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+@Bean
+public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    http
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))   // ← AQUÍ
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .requestMatchers("/api/auth/**").permitAll()
+            .requestMatchers("/api/eventos/**").permitAll()
+            .requestMatchers("/api/sesiones/**").permitAll()
+            .anyRequest().authenticated()
+        );
+
+    http.authenticationProvider(authenticationProvider());
+    http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+
+    return http.build();
+}
+
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf(csrf -> csrf.disable()) // Desactivamos CSRF (estándar en APIs REST)
-            
-            // 5. ¡CLAVE JWT!: Decimos que no guarde sesiones en el servidor.
-            // Cada petición debe venir con su propio Token.
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()    // Rutas para login/registro libres
-                .requestMatchers("/api/eventos/**").permitAll() // Ver eventos es libre
-                .requestMatchers("/api/sesiones/**").permitAll()    // Vers sesines es libre
-                .anyRequest().authenticated()                  // El resto, con Token
-            );
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        config.setAllowCredentials(true);
 
-        http.authenticationProvider(authenticationProvider());
-
-        // 6. Añadimos nuestro filtro JWT antes del filtro de usuario/contraseña de Spring
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        return http.build();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }

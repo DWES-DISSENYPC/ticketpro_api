@@ -11,6 +11,10 @@ import com.ticketpro.api.model.Rol;
 import com.ticketpro.api.model.Telefono;
 import com.ticketpro.api.model.Usuario;
 import com.ticketpro.api.repository.UsuarioRepository;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+
 
 @Service
 public class UsuarioService {
@@ -165,32 +171,85 @@ public class UsuarioService {
         return dto;
     }
 
-    // Añadir en UsuarioService.java
-
 public void generarTokenRecuperacion(String email) {
-    Usuario usuario = usuarioRepo.findByEmail(email)
-            .orElseThrow(() -> new RecursoNoEncontrado("No existe un usuario con ese email."));
+    long startTime = System.currentTimeMillis();
+    
+    // Usamos java.util.Optional
+    Optional<Usuario> usuarioOpt = usuarioRepo.findByEmail(email);
 
-    // Generamos un token único (puedes usar UUID)
-    String token = UUID.randomUUID().toString();
-    usuario.setPasswordResetToken(token);
-    // Opcional: podrías añadir un campo 'tokenExpiration' en la entidad Usuario
-    usuarioRepo.save(usuario);
+    if (usuarioOpt.isPresent()) {
+        Usuario usuario = usuarioOpt.get();
+        String token = UUID.randomUUID().toString();
+        
+        usuario.setPasswordResetToken(token);
+        // usuario.setTokenExpiration(LocalDateTime.now().plusHours(1)); // Opcional pero recomendado
+        usuarioRepo.save(usuario);
 
-    // AQUÍ DEBERÍAS ENVIAR EL EMAIL
-    System.out.println("Enviando email a " + email + " con el token: " + token);
-    emailService.enviarCorreoHTML(usuario.getEmail(), token);
+        // Envío del email (esto es lo que tarda más y justifica el delay)
+        emailService.enviarCorreoHTML(usuario.getEmail(), token);
+    } else {
+        // Log discreto para desarrollo
+        System.out.println("Aviso: Intento de recuperación para email no registrado: " + email);
+    }
+
+    // Mantenemos la simetría de tiempo para evitar ataques de temporización
+    long duration = System.currentTimeMillis() - startTime;
+    if (duration < 1500) {
+        try {
+            Thread.sleep(1500 - duration);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
 }
 
 @Transactional
 public void resetearPassword(String token, String nuevaPassword) {
+    // Aquí sí lanzamos excepción porque el usuario ya está interactuando con un token específico
     Usuario usuario = usuarioRepo.findByPasswordResetToken(token)
             .orElseThrow(() -> new AccesoDenegadoException("Token de recuperación inválido o expirado."));
 
     // Encriptamos y guardamos
     usuario.setPassword(passwordEncoder.encode(nuevaPassword));
-    usuario.setPasswordResetToken(null); // Limpiamos el token tras usarlo
+    
+    // Limpieza de seguridad
+    usuario.setPasswordResetToken(null); 
+    // usuario.setTokenExpiration(null);
+    
     usuarioRepo.save(usuario);
+}
+
+@Transactional
+public Map<String, Object> obtenerDatosPerfilCompleto(String email) {
+    Usuario usuario = usuarioRepo.findByEmail(email)
+            .orElseThrow(() -> new RecursoNoEncontrado("Usuario no encontrado"));
+
+    Map<String, Object> perfil = new HashMap<>();
+    
+    // Datos básicos
+    perfil.put("username", usuario.getUsername());
+    perfil.put("nombre", usuario.getNombre());
+    perfil.put("apellidos", usuario.getApellidos());
+    perfil.put("email", usuario.getEmail());
+    perfil.put("dni", usuario.getDni());
+    perfil.put("fechaNacimiento", usuario.getFechaNacimiento());
+    perfil.put("metodoPagoPref", usuario.getMetodoPagoPref());
+    perfil.put("imagenUrl", usuario.getImagenUrl());
+    perfil.put("rol", usuario.getRol());
+
+    // Dirección (si existe)
+    if (usuario.getDireccion() != null) {
+        perfil.put("direccion", usuario.getDireccion()); 
+    }
+
+    // Teléfonos (solo los números)
+    if (usuario.getTelefonos() != null) {
+        perfil.put("telefonos", usuario.getTelefonos().stream()
+                .map(t -> t.getNumero())
+                .toList());
+    }
+
+    return perfil;
 }
 
 

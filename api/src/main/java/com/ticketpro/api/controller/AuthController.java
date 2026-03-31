@@ -2,6 +2,7 @@ package com.ticketpro.api.controller;
 
 import com.ticketpro.api.dto.PasswordResetRequestDTO;
 import com.ticketpro.api.dto.RegistroRequestDTO;
+import com.ticketpro.api.model.Usuario;
 import com.ticketpro.api.security.jwt.JwtUtils;
 import com.ticketpro.api.service.UsuarioService;
 
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,7 +80,7 @@ public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequestDTO regist
 public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequestDTO request) {
     usuarioService.generarTokenRecuperacion(request.getEmail());
     Map<String, String> res = new HashMap<>();
-    res.put("message", "Si el email existe, se ha enviado un enlace de recuperación.");
+    res.put("message", "Si el email está registrado, recibirás un enlace de recuperación en unos minutos.");
     return ResponseEntity.ok(res);
 }
 
@@ -90,4 +92,10 @@ public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request)
     res.put("message", "Contraseña actualizada con éxito.");
     return ResponseEntity.ok(res);
 }
+
+@GetMapping("/perfil")
+public ResponseEntity<Map<String, Object>> obtenerPerfil(Principal principal) {
+    return ResponseEntity.ok(usuarioService.obtenerDatosPerfilCompleto(principal.getName()));
+}
+
 }
