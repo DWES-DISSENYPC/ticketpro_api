@@ -19,7 +19,6 @@ import com.ticketpro.api.dto.CompraEntradasDTO;
 import com.ticketpro.api.dto.DetalleCompraDTO;
 import com.ticketpro.api.dto.HistorialCompraDTO;
 import com.ticketpro.api.dto.MensajeResponseDTO;
-import com.ticketpro.api.model.Compra;
 import com.ticketpro.api.service.CompraService;
 
 @RestController

@@ -1,12 +1,14 @@
 package com.ticketpro.api.controller;
 
 import com.ticketpro.api.dto.CambioPasswordDTO;
+import com.ticketpro.api.dto.UsuarioPerfilDTO;
 import com.ticketpro.api.dto.UsuarioUpdateDTO;
 import com.ticketpro.api.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/clientes")
 public class UsuarioController {
@@ -22,7 +25,7 @@ public class UsuarioController {
     private UsuarioService usuarioService;
 
     @GetMapping("/perfil")
-    public ResponseEntity<UsuarioUpdateDTO> obtenerPerfil(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<UsuarioPerfilDTO> obtenerPerfil(@AuthenticationPrincipal UserDetails userDetails) {
         // Cambiamos el retorno a UsuarioUpdateDTO para que Angular reciba todos los
         // campos
         return ResponseEntity.ok(usuarioService.obtenerPerfilCompleto(userDetails.getUsername()));

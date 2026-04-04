@@ -2,7 +2,6 @@ package com.ticketpro.api.controller;
 
 import com.ticketpro.api.dto.PasswordResetRequestDTO;
 import com.ticketpro.api.dto.RegistroRequestDTO;
-import com.ticketpro.api.model.Usuario;
 import com.ticketpro.api.security.jwt.JwtUtils;
 import com.ticketpro.api.service.UsuarioService;
 
