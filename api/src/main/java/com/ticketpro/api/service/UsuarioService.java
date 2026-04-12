@@ -7,6 +7,7 @@ import com.ticketpro.api.dto.UsuarioPerfilDTO;
 import com.ticketpro.api.dto.UsuarioUpdateDTO;
 import com.ticketpro.api.exception.AccesoDenegadoException;
 import com.ticketpro.api.exception.ConflictoException;
+import com.ticketpro.api.exception.ContrasenaIncorrectaException;
 import com.ticketpro.api.exception.RecursoNoEncontrado;
 import com.ticketpro.api.model.Direccion;
 import com.ticketpro.api.model.Rol;
@@ -15,6 +16,10 @@ import com.ticketpro.api.model.TipoTelefono;
 import com.ticketpro.api.model.Usuario;
 import com.ticketpro.api.repository.UsuarioRepository;
 
+import java.io.IOException;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,9 +29,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import java.nio.file.Path;
 
 @Service
 public class UsuarioService {
@@ -183,7 +191,7 @@ public class UsuarioService {
         // 1. Validar que la contraseña actual es correcta
         // passwordEncoder.matches(texto_plano, hash_guardado)
         if (!passwordEncoder.matches(dto.getPasswordActual(), usuario.getPassword())) {
-            throw new AccesoDenegadoException("La contraseña actual no es correcta.");
+            throw new ContrasenaIncorrectaException("La contraseña actual no es correcta");
         }
 
         // 2. Encriptar la nueva contraseña
@@ -316,6 +324,42 @@ public class UsuarioService {
 
         return perfil;
     }
+
+    public String guardarImagenPerfil(String username, MultipartFile imagen) {
+
+    Usuario usuario = usuarioRepo.findByUsername(username)
+            .orElseThrow(() -> new RecursoNoEncontrado("Usuario no encontrado"));
+
+    try {
+        // Carpeta donde guardar
+        String carpeta = "images/usuarios/";
+
+        // Nombre del archivo
+        String nombreArchivo = "usuario-" + username + ".png";
+
+        // Ruta física
+        Path ruta = Paths.get(carpeta + nombreArchivo);
+
+        // Crear carpetas si no existen
+        Files.createDirectories(ruta.getParent());
+
+        // Guardar archivo
+        Files.write(ruta, imagen.getBytes());
+
+        // URL pública
+        String url = "http://localhost:8080/" + carpeta + nombreArchivo;
+
+        // Guardar en BD
+        usuario.setImagenUrl(url);
+        usuarioRepo.save(usuario);
+
+        return url;
+
+    } catch (IOException e) {
+        throw new RuntimeException("Error al guardar la imagen", e);
+    }
+}
+
 
     private UsuarioPerfilDTO entityToPerfilDto(Usuario u) {
         UsuarioPerfilDTO dto = new UsuarioPerfilDTO();

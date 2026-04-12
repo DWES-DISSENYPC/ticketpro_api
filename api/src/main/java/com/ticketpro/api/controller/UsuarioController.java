@@ -4,19 +4,24 @@ import com.ticketpro.api.dto.CambioPasswordDTO;
 import com.ticketpro.api.dto.UsuarioPerfilDTO;
 import com.ticketpro.api.dto.UsuarioUpdateDTO;
 import com.ticketpro.api.service.UsuarioService;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/api/clientes")
 public class UsuarioController {
@@ -54,4 +59,18 @@ public class UsuarioController {
         usuarioService.actualizarPassword(userDetails.getUsername(), passwordDTO);
         return ResponseEntity.ok("Contraseña actualizada correctamente.");
     }
+
+    @PostMapping("/imagen")
+public ResponseEntity<Map<String, String>> subirImagen(
+        @AuthenticationPrincipal UserDetails userDetails,
+        @RequestParam("imagen") MultipartFile imagen) {
+
+    String url = usuarioService.guardarImagenPerfil(userDetails.getUsername(), imagen);
+
+    Map<String, String> response = new HashMap<>();
+    response.put("url", url);
+
+    return ResponseEntity.ok(response);
+}
+
 }

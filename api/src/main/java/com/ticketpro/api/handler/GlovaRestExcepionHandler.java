@@ -1,5 +1,8 @@
 package com.ticketpro.api.handler;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -8,6 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.ticketpro.api.exception.AccesoDenegadoException;
 import com.ticketpro.api.exception.ConflictoException;
+import com.ticketpro.api.exception.ContrasenaIncorrectaException;
 import com.ticketpro.api.exception.RecursoNoEncontrado;
 
 @RestControllerAdvice
@@ -44,6 +48,15 @@ public class GlovaRestExcepionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body("Los datos de acceso son incorrectos. Ponte en contacto con el soporte técnico si crees que esto es un error.");
     }
+
+    @ExceptionHandler(ContrasenaIncorrectaException.class)
+    public ResponseEntity<Map<String, String>> handleContrasenaIncorrecta(ContrasenaIncorrectaException ex) {
+        Map<String, String> body = new HashMap<>();
+        body.put("message", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+        // o HttpStatus.UNAUTHORIZED si prefieres 401
+    }
+
 
 }
 

@@ -8,4 +8,6 @@ import com.ticketpro.api.model.Evento;
 
 public interface EventoRepository extends JpaRepository<Evento, Long> {
     List<Evento> findByCategoria(String categoria);
+
+    boolean existsByTicketmasterId(String tmId);
 }

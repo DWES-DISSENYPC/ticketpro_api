@@ -36,6 +36,10 @@ public class AuthTokenFilter extends OncePerRequestFilter {
 
  System.out.println(">>> FILTRO JWT EJECUTADO: " + request.getRequestURI());
 
+             System.out.println(">>> URI: " + request.getRequestURI());
+    System.out.println(">>> Authorization header: " + request.getHeader("Authorization"));
+    System.out.println(">>> Content-Type: " + request.getHeader("Content-Type"));
+
         try {
             // 1. Extraemos el token del encabezado "Authorization"
             String jwt = parseJwt(request);
