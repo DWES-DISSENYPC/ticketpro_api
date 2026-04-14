@@ -16,59 +16,71 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-// Este filtro se ejecuta EXACTAMENTE una vez por cada petición que llega a la API
+/* ###### FILTRO DE AUTENTICACION JWT ###### */
+// ------ Este Filtro Se Ejecuta Exactamente Una Vez Por Cada Peticion Que Llega A La Api ------
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
-     public AuthTokenFilter() {
+    /* ###### DEPENDENCIAS Y CONSTRUCTOR ###### */
+
+    // ------ Imprime Registro Al Instanciarse Para Verificacion ------
+    public AuthTokenFilter() {
         System.out.println(">>> CONSTRUCTOR DEL FILTRO JWT CREADO");
     }
 
+    // ------ Nuestra Clase Que Valida El Token Formado ------
     @Autowired
-    private JwtUtils jwtUtils; // Nuestra clase que valida el token
+    private JwtUtils jwtUtils; 
 
+    // ------ Nuestra Clase Que Busca Y Valida Al Usuario En La Bd ------
     @Autowired
-    private UserDetailsServiceImpl userDetailsService; // Nuestra clase que busca en la BD
+    private UserDetailsServiceImpl userDetailsService; 
 
+    /* ###### LOGICA INTERNA DEL FILTRO ###### */
+
+    // ------ Captura La Peticion Extrae Autorizacion Y Verifica Identidad ------
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
            throws ServletException, IOException {
 
- System.out.println(">>> FILTRO JWT EJECUTADO: " + request.getRequestURI());
-
-             System.out.println(">>> URI: " + request.getRequestURI());
-    System.out.println(">>> Authorization header: " + request.getHeader("Authorization"));
-    System.out.println(">>> Content-Type: " + request.getHeader("Content-Type"));
+        System.out.println(">>> FILTRO JWT EJECUTADO: " + request.getRequestURI());
+        System.out.println(">>> URI: " + request.getRequestURI());
+        System.out.println(">>> Authorization header: " + request.getHeader("Authorization"));
+        System.out.println(">>> Content-Type: " + request.getHeader("Content-Type"));
 
         try {
-            // 1. Extraemos el token del encabezado "Authorization"
+            // ------ 1. Extraemos El Token Del Encabezado "Authorization" ------
             String jwt = parseJwt(request);
 
-            // 2. Si el token existe y es válido (no ha caducado ni ha sido alterado)
+            // ------ 2. Si El Token Existe Y Es Valido (No Ha Caducado Ni Ha Sido Alterado) ------
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
+                
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
 
-                // 3. Cargamos el usuario de la base de datos
+                // ------ 3. Cargamos El Usuario De La Base De Datos ------
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 
-                // 4. Creamos una "tarjeta de identificación" (Authentication) de Spring
+                // ------ 4. Creamos Una "Tarjeta De Identificacion" (Authentication) De Spring ------
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 
+                // ------ Agregamos Mas Detalles Obtenidos Http O Sesion ------
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // 5. Metemos esa tarjeta en el "Contexto", así la API sabe que este usuario tiene permiso
+                // ------ 5. Metemos Esa Tarjeta En El Contexto Asi La Api Sabe Que Este Usuario Tiene Permiso ------
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         } catch (Exception e) {
             logger.error("No se puede establecer la autenticación del usuario: {}", e);
         }
 
-        // 6. Dejamos que la petición siga su camino hacia el controlador
+        // ------ 6. Dejamos Que La Peticion Siga Su Camino Hacia El Controlador ------
         filterChain.doFilter(request, response);
     }
 
-    // Método auxiliar para limpiar el prefijo "Bearer " del token
+    /* ###### METODOS UTILITARIOS ###### */
+
+    // ------ Metodo Auxiliar Para Limpiar El Prefijo "Bearer " Del Token ------
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
 

@@ -22,39 +22,57 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/* ###### CONFIGURACION DE SEGURIDAD ###### */
+// ------ Clase Principal Que Configura La Seguridad Integral De La Api ------
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfig {
 
+    /* ###### DEPENDENCIAS INYECTADAS ###### */
+
+    // ------ Servicio Para Obtener Detalles De Usuario ------
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
 
+    // ------ Filtro Que Verifica El Token Jwt En Cada Peticion ------
     @Autowired
-    private AuthTokenFilter authTokenFilter; // ✔ ahora sí se inyecta
+    private AuthTokenFilter authTokenFilter; // ------ Ahora Si Se Inyecta ------
 
+    /* ###### BEANS DE SEGURIDAD ###### */
+
+    // ------ Proveedor De Autenticacion Que Usa El Servicio De Usuario Y Codificador ------
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+        // Mantenemos la sintaxis original tal cual estaba
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
+    // ------ Gestor De Autenticacion Del Sistema ------
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
+    // ------ Codificador De Contraseñas Con Bcrypt ------
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // ------ Cadena De Filtros De Seguridad Principal ------
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // ------ Configura Politicas De Cors ------
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // ------ Desactiva Csrf Ya Que Usamos Tokens ------
                 .csrf(csrf -> csrf.disable())
+                // ------ Define La Sesion Como Sin Estado Stateless ------
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // ------ Define Permisos De Rutas Http ------
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                     .requestMatchers("/error").permitAll()
@@ -65,25 +83,36 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/clientes/perfil").authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/clientes/update").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/clientes/imagen").authenticated()
-                    .requestMatchers(HttpMethod.PATCH, "/api/clientes/password").authenticated()  // ← añade esto
+                    .requestMatchers(HttpMethod.PATCH, "/api/clientes/password").authenticated()  // ------ Añade Esto ------
                     .anyRequest().authenticated());
 
+        // ------ Añade Proveedor De Autenticacion ------
         http.authenticationProvider(authenticationProvider());
+        // ------ Añade Filtro Jwt Antes Del Filtro Por Defecto ------
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    /* ###### CONFIGURACION CORS ###### */
+
+    // ------ Fuente De Configuracion De Cors ------
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
+        
+        // ------ Permite Origen Del Frontend De Angular ------
         config.setAllowedOrigins(List.of("http://localhost:4200"));
+        // ------ Permite Metodos Especificos ------
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("*")); // Solo esto, quita el addAllowedHeader
+        // ------ Permite Todos Los Encabezados ------
+        config.setAllowedHeaders(List.of("*"));
+        // ------ Expone Encabezado De Autorizacion ------
         config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // ------ Aplica Configuracion A Todas Las Rutas ------
         source.registerCorsConfiguration("/**", config);
         return source;
     }

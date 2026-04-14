@@ -21,35 +21,45 @@ import com.ticketpro.api.dto.HistorialCompraDTO;
 import com.ticketpro.api.dto.MensajeResponseDTO;
 import com.ticketpro.api.service.CompraService;
 
+/* ###### CONTROLADOR DE COMPRAS ###### */
+// ------ Punto De Entrada Para Todas Las Operaciones Relacionadas Con Las Compras ------
 @RestController
 @RequestMapping("/api/compras")
 public class CompraController {
 
+    /* ###### DEPENDENCIAS INYECTADAS ###### */
+
+    // ------ Servicio Para Procesar La Logica De Compras ------
     @Autowired
     private CompraService compraService;
 
+    /* ###### ENDPOINTS DE OPERACIONES DE COMPRA ###### */
+
+    // ------ Endpoint Para Realizar Una Nueva Compra ------
     @PostMapping
     public ResponseEntity<String> realizarCompra(
             @RequestBody CompraEntradasDTO compraDTO,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // El userDetails contiene el username (email en tu caso) del token JWT
+        // ------ El UserDetails Contiene El Username Jwt ------
         String username = userDetails.getUsername();
 
-        // Llamamos al servicio pasando el email en lugar del ID
+        // ------ Llamamos Al Servicio Pasando El Email En Lugar Del Id ------
         compraService.realizarCompra(username, compraDTO);
 
         return ResponseEntity.ok("Compra realizada con éxito. ¡Entradas reservadas!");
     }
 
-    // Endpoint para la tabla general
+    /* ###### ENDPOINTS DE CONSULTAS DE COMPRA ###### */
+
+    // ------ Endpoint Para La Tabla General Del Historial De Compras ------
     @GetMapping("/mis-compras")
     public ResponseEntity<List<HistorialCompraDTO>> listarMisCompras(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(compraService.obtenerHistorial(userDetails.getUsername()));
     }
 
-    // Endpoint para el botón "Ver Detalle"
+    // ------ Endpoint Para El Boton Ver Detalle De Una Compra Especifica ------
     @GetMapping("/{id}")
     public ResponseEntity<DetalleCompraDTO> verDetalle(
             @PathVariable Long id,
@@ -57,6 +67,9 @@ public class CompraController {
         return ResponseEntity.ok(compraService.obtenerDetalle(id, userDetails.getUsername()));
     }
 
+    /* ###### ENDPOINTS DE CANCELACION ###### */
+
+    // ------ Endpoint Para Cancelar Una Compra ------
     @DeleteMapping("/{id}/cancelar")
     public ResponseEntity<MensajeResponseDTO> cancelar(
             @PathVariable Long id,
@@ -67,6 +80,9 @@ public class CompraController {
                 .ok(new MensajeResponseDTO("Compra cancelada correctamente. El importe será devuelto a su tarjeta."));
     }
 
+    /* ###### ENDPOINTS PARA ADMINISTRACION ###### */
+
+    // ------ Endpoint Para Obtener Las Compras Pendientes De Un Usuario ------
     @GetMapping("/pendientes")
     public ResponseEntity<List<DetalleCompraDTO>> listarPendientes(@RequestParam Long usuarioId) {
         List<DetalleCompraDTO> pendientes = compraService.obtenerComprasPendientes(usuarioId);

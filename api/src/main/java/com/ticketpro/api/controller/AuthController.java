@@ -17,23 +17,33 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
+/* ###### CONTROLADOR DE AUTENTICACION ###### */
+// ------ Expone Los Endpoints Relacionados Con El Login Y Registro ------
 @RestController
-@RequestMapping("/api/auth") // Esta es la ruta que permitimos en WebSecurityConfig
+@RequestMapping("/api/auth") // ------ Esta Es La Ruta Que Permitimos En WebSecurityConfig ------
 public class AuthController {
 
-    @Autowired
-    AuthenticationManager authenticationManager; // El motor que verifica las credenciales
+    /* ###### DEPENDENCIAS INYECTADAS ###### */
 
+    // ------ El Motor Que Verifica Las Credenciales ------
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    // ------ Servicio Para La Gestion De Usuarios ------
     @Autowired
     UsuarioService usuarioService;
 
+    // ------ Nuestra Herramienta Para Crear El Token ------
     @Autowired
-    JwtUtils jwtUtils; // Nuestra herramienta para crear el Token
+    JwtUtils jwtUtils;
 
+    /* ###### ENDPOINTS DE AUTENTICACION ###### */
+
+    // ------ Endpoint Para El Inicio De Sesion ------
     @PostMapping("/login")
     public Map<String, String> authenticateUser(@RequestBody Map<String, String> loginRequest) {
         
-        // 1. Intentamos autenticar al usuario con los datos de Postman
+        // ------ Intentamos Autenticar Al Usuario Con Los Datos Recibidos ------
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.get("username"), 
@@ -41,60 +51,67 @@ public class AuthController {
                 )
         );
 
-        // 2. Si las credenciales son correctas, lo guardamos en el contexto de seguridad
+        // ------ Si Las Credenciales Son Correctas Lo Guardamos En El Contexto De Seguridad ------
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // 3. Generamos el Token JWT usando el nombre del usuario autenticado
+        // ------ Generamos El Token Jwt Usando El Nombre Del Usuario Autenticado ------
         String jwt = jwtUtils.generateJwtToken(authentication.getName());
 
-        // 4. Preparamos la respuesta con el Token para el cliente
+        // ------ Preparamos La Respuesta Con El Token Para El Cliente ------
         Map<String, String> response = new HashMap<>();
         response.put("token", jwt);
         
-        return response; // Postman recibirá un JSON con el token
+        // ------ El Cliente Recibira Un Json Con El Token ------
+        return response;
     }
 
+    // ------ Endpoint Para Cerrar Sesion ------
     @PostMapping("/logout")
-public ResponseEntity<?> logoutUser() {
-    // En JWT, el servidor no necesita hacer nada especial para invalidar el token
-    // (A menos que uses una "Blacklist" de tokens, que es más avanzado).
-    return ResponseEntity.ok("Sesión cerrada con éxito. El token ya no debe ser utilizado.");
-}
+    public ResponseEntity<?> logoutUser() {
+        // ------ En Jwt El Servidor No Necesita Hacer Nada Especial Para Invalidar El Token ------
+        // ------ A Menos Que Usaras Una Blacklist De Tokens ------
+        return ResponseEntity.ok("Sesión cerrada con éxito. El token ya no debe ser utilizado.");
+    }
 
+    // ------ Endpoint Para Registrar Un Nuevo Usuario ------
     @PostMapping("/register")
-public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequestDTO registroDTO) {
- 
-    usuarioService.crearNuevoUsuario(registroDTO);
+    public ResponseEntity<?> registrarUsuario(@RequestBody RegistroRequestDTO registroDTO) {
+     
+        usuarioService.crearNuevoUsuario(registroDTO);
 
-    // Creamos un mapa para que la respuesta sea un JSON: {"message": "..."} para que lo coja bien el cliente
-    Map<String, String> response = new HashMap<>();
-    response.put("message", "Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
+        // ------ Creamos Un Mapa Para Que La Respuesta Sea Un Json Y El Cliente Lo Procese Bien ------
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Usuario registrado con éxito. ¡Ya puedes iniciar sesión!");
 
-    return ResponseEntity.ok(response);
-}
+        return ResponseEntity.ok(response);
+    }
 
-// Añadir en AuthController.java
+    /* ###### ENDPOINTS DE RECUPERACION DE CONTRASEÑA ###### */
 
-@PostMapping("/forgot-password")
-public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequestDTO request) {
-    usuarioService.generarTokenRecuperacion(request.getEmail());
-    Map<String, String> res = new HashMap<>();
-    res.put("message", "Si el email está registrado, recibirás un enlace de recuperación en unos minutos.");
-    return ResponseEntity.ok(res);
-}
+    // ------ Endpoint Para Solicitar El Restablecimiento De Contraseña ------
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody PasswordResetRequestDTO request) {
+        usuarioService.generarTokenRecuperacion(request.getEmail());
+        Map<String, String> res = new HashMap<>();
+        res.put("message", "Si el email está registrado, recibirás un enlace de recuperación en unos minutos.");
+        return ResponseEntity.ok(res);
+    }
 
-@PostMapping("/reset-password")
-public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
-    // Recibimos token y nueva password del cuerpo de la petición
-    usuarioService.resetearPassword(request.get("token"), request.get("password"));
-    Map<String, String> res = new HashMap<>();
-    res.put("message", "Contraseña actualizada con éxito.");
-    return ResponseEntity.ok(res);
-}
+    // ------ Endpoint Para Procesar El Restablecimiento De Contraseña ------
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        // ------ Recibimos Token Y Nueva Contraseña Del Cuerpo De La Peticion ------
+        usuarioService.resetearPassword(request.get("token"), request.get("password"));
+        Map<String, String> res = new HashMap<>();
+        res.put("message", "Contraseña actualizada con éxito.");
+        return ResponseEntity.ok(res);
+    }
 
-@GetMapping("/perfil")
-public ResponseEntity<Map<String, Object>> obtenerPerfil(Principal principal) {
-    return ResponseEntity.ok(usuarioService.obtenerDatosPerfilCompleto(principal.getName()));
-}
+    /* ###### ENDPOINTS DE USUARIO ###### */
 
+    // ------ Endpoint Para Obtener Los Datos Del Perfil Del Usuario Logueado ------
+    @GetMapping("/perfil")
+    public ResponseEntity<Map<String, Object>> obtenerPerfil(Principal principal) {
+        return ResponseEntity.ok(usuarioService.obtenerDatosPerfilCompleto(principal.getName()));
+    }
 }

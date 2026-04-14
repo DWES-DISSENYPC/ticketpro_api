@@ -11,21 +11,28 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/* ###### CONTROLADOR DE SESIONES ###### */
+// ------ Administra Y Expone Las Rutas Relacionadas Con Las Sesiones De Eventos ------
 @RestController
 @RequestMapping("/api/sesiones")
 public class SesionController {
 
+    /* ###### DEPENDENCIAS INYECTADAS ###### */
+
+    // ------ Servicio Con La Logica Empresarial De Sesiones ------
     @Autowired
     private SesionService sesionService;
 
-    // Escucha /api/sesiones/evento/{id} para que quede claro que el ID es del evento
+    /* ###### ENDPOINTS DE SESIONES ###### */
+
+    // ------ Escucha Api Sesiones Evento Id Para Que Quede Claro Que El Id Es Del Evento ------
     @GetMapping("/evento/{eventoId}")
     public ResponseEntity<List<SesionDTO>> listarPorEvento(@PathVariable Long eventoId) {
         List<SesionDTO> sesiones = sesionService.obtenerSesionesPorEvento(eventoId);
         return ResponseEntity.ok(sesiones);
     }
     
-    // GET /api/sesiones/{id} - Detalle de una sesión específica para el formulario de compra
+    // ------ Detalle De Una Sesion Especifica Para El Formulario De Compra ------
     @GetMapping("/{id}")
     public ResponseEntity<SesionDTO> obtenerDetalle(@PathVariable Long id) {
         SesionDTO sesion = sesionService.obtenerSesionPorId(id);

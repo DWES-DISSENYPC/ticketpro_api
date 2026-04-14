@@ -7,39 +7,51 @@ import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
 
+/* ###### UTILIDADES DE MANEJO JWT ###### */
+// ------ Contiene Los Metodos Para Crear Procesar Y Validar Nuestros Tokens ------
 @Component
 public class JwtUtils {
 
-    // 1. Traemos la clave secreta desde el application.properties
+    /* ###### PROPIEDADES DE CONFIGURACION ###### */
+
+    // ------ 1. Traemos La Clave Secreta Desde El Application.properties ------
     @Value("${ticketpro.app.jwtSecret}")
     private String jwtSecret;
 
-    // 2. Traemos el tiempo de duración (ej: 24 horas)
+    // ------ 2. Traemos El Tiempo De Duracion (Ej: 24 Horas) ------
     @Value("${ticketpro.app.jwtExpirationMs}")
     private int jwtExpirationMs;
 
-    // Generar el token cuando el usuario se loguea con éxito
+    /* ###### METODOS DE GENERACION ###### */
+
+    // ------ Generar El Token Cuando El Usuario Se Loguea Con Exito ------
     public String generateJwtToken(String username) {
         return Jwts.builder()
-                .setSubject(username) // Metemos el nombre de usuario en el token
-                .setIssuedAt(new Date()) // Fecha de creación
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)) // Fecha de caducidad
-                .signWith(key(), SignatureAlgorithm.HS256) // Firma digital para que no lo falsifiquen
+                .setSubject(username) // ------ Metemos El Nombre De Usuario En El Token ------
+                .setIssuedAt(new Date()) // ------ Fecha De Creacion ------
+                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs)) // ------ Fecha De Caducidad ------
+                .signWith(key(), SignatureAlgorithm.HS256) // ------ Firma Digital Para Que No Lo Falsifiquen ------
                 .compact();
     }
 
-    // Convertir el String secreto del properties en una llave real
+    /* ###### METODOS CRIPTOGRAFICOS ###### */
+
+    // ------ Convertir El String Secreto Del Properties En Una Llave Real ------
     private Key key() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    // Obtener el nombre de usuario de dentro de un token
+    /* ###### METODOS DE EXTRACCION ###### */
+
+    // ------ Obtener El Nombre De Usuario De Dentro De Un Token Recuperado ------
     public String getUserNameFromJwtToken(String token) {
         return Jwts.parserBuilder().setSigningKey(key()).build()
                .parseClaimsJws(token).getBody().getSubject();
     }
 
-    // Verificar si el token es válido o si alguien lo ha manipulado
+    /* ###### METODOS DE VALIDACION ###### */
+
+    // ------ Verificar Si El Token Es Valido O Si Alguien Lo Ha Manipulado O Caducado ------
     public boolean validateJwtToken(String authToken) {
         try {
             Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);

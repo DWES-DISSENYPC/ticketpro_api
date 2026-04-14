@@ -12,41 +12,45 @@ import com.ticketpro.api.service.TicketmasterImportService;
 
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 
+/* ###### CLASE PRINCIPAL DE LA APLICACION ###### */
+// ------ Punto De Entrada De Spring Boot Y Configuracion De Beans Globales ------
 @SpringBootApplication(scanBasePackages = "com.ticketpro.api")
 public class ApiApplication {
 
-	
-	public static void main(String[] args) {
-		SpringApplication.run(ApiApplication.class, args);
-	}
+    /* ###### METODO MAIN ###### */
 
-	@Bean
-public ObjectMapper objectMapper() {
-    ObjectMapper mapper = new ObjectMapper();
-    // Esto es vital para que no falle al leer las fechas de Ticketmaster
-    mapper.registerModule(new JavaTimeModule()); 
-    return mapper;
-}
+    // ------ Lanza El Contexto De Aplicacion De Spring Boot ------
+    public static void main(String[] args) {
+        SpringApplication.run(ApiApplication.class, args);
+    }
 
-@Bean
-public WebClient.Builder webClientBuilder() {
-    // Definimos un límite de 10 MB (10 * 1024 * 1024)
-    final int size = 10 * 1024 * 1024;
-    final ExchangeStrategies strategies = ExchangeStrategies.builder()
-            .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
-            .build();
+    /* ###### BEANS DE CONFIGURACION GLOBAL ###### */
 
-    return WebClient.builder()
-            .exchangeStrategies(strategies);
-}
+    // ------ Configura El Mapeador De Objetos Json ------
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        
+        // ------ Esto Es Vital Para Que No Falle Al Leer Las Fechas De Ticketmaster ------
+        mapper.registerModule(new JavaTimeModule()); 
+        
+        return mapper;
+    }
 
-// 	@Bean
-// CommandLineRunner init(TicketmasterImportService ticketmasterService) {
-//     return args -> {
-//         System.out.println("--- Iniciando importación de Ticketmaster ---");
-//         ticketmasterService.importarEventosEspana();
-//         System.out.println("--- Importación finalizada ---");
-//     };
-// }
+    // ------ Configura El Cliente Web Reactivo ------
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        
+        // ------ Definimos Un Limite De 10 Mb En Memoria ------
+        final int size = 10 * 1024 * 1024;
+        
+        // ------ Aplicamos La Estrategia De Tamaño Máximo ------
+        final ExchangeStrategies strategies = ExchangeStrategies.builder()
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(size))
+                .build();
+
+        return WebClient.builder()
+                .exchangeStrategies(strategies);
+    }
 
 }
