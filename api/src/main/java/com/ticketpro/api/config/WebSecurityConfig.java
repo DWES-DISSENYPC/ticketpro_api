@@ -79,6 +79,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/api/eventos/**").permitAll()
                     .requestMatchers("/api/sesiones/**").permitAll()
+                    .requestMatchers("/api/compras/ticket/*/qr").permitAll()
                     .requestMatchers("/api/clientes/perfil").authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/clientes/update").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/clientes/imagen").authenticated()

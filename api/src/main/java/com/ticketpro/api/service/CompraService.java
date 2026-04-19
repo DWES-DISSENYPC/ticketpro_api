@@ -3,6 +3,7 @@ package com.ticketpro.api.service;
 import com.ticketpro.api.dto.CompraEntradasDTO;
 import com.ticketpro.api.dto.DetalleCompraDTO;
 import com.ticketpro.api.dto.HistorialCompraDTO;
+import com.ticketpro.api.dto.TicketDTO;
 import com.ticketpro.api.exception.AccesoDenegadoException;
 import com.ticketpro.api.exception.ConflictoException;
 import com.ticketpro.api.exception.RecursoNoEncontrado;
@@ -11,6 +12,7 @@ import com.ticketpro.api.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -117,12 +119,21 @@ public class CompraService {
             throw new AccesoDenegadoException("No tienes permiso para ver esta compra");
         }
 
-        // Extraemos solo los Strings de los QR de la lista de tickets
-        List<String> qrs = c.getTickets().stream()
-                .map(Ticket::getCodigoQr)
+        // Mapeo de tickets a TicketDTO con generación de URL de Google Charts QR
+        List<TicketDTO> tickets = c.getTickets().stream()
+                .map(t -> {
+                    String qrUrl = "/api/compras/ticket/" + t.getCodigoQr() + "/qr";
+                    return new TicketDTO(
+                            t.getId(),
+                            t.getCodigoQr(),
+                            qrUrl,
+                            t.getEstadoTicket() == EstadoTicket.USADO
+                    );
+                })
                 .collect(Collectors.toList());
 
         return new DetalleCompraDTO(
+                c.getId(),
                 c.getLocalizador(),
                 c.getSesion().getEvento().getTitulo(),
                 c.getSesion().getEvento().getCategoria(),
@@ -134,7 +145,7 @@ public class CompraService {
                 c.getTotalPagado(),
                 c.getEstadoPago().toString(),
                 c.getFechaCompra(),
-                qrs);
+                tickets);
     }
 
     @Transactional
@@ -147,12 +158,12 @@ public class CompraService {
             throw new AccesoDenegadoException("No puedes cancelar una compra que no te pertenece");
         }
 
-        // 2. Validación de tiempo (Mínimo 48h antes del evento)
+        // 2. Validación de tiempo (Mínimo 5 días antes del evento)
         LocalDateTime ahora = LocalDateTime.now();
-        LocalDateTime fechaLimite = compra.getSesion().getFechaHora().minusHours(7200);
+        LocalDateTime fechaLimite = compra.getSesion().getFechaHora().minusDays(5);
 
         if (ahora.isAfter(fechaLimite)) {
-            throw new ConflictoException("Solo se pueden cancelar compras con más de 5 dias de antelación");
+            throw new ConflictoException("Solo se pueden cancelar compras con más de 5 días de antelación");
         }
 
         // 3. Liberar Stock en la Sesión
@@ -177,7 +188,7 @@ public class CompraService {
     }
 
     public List<DetalleCompraDTO> obtenerComprasPendientes(Long usuarioId) {
-        List<Compra> compras = compraRepository.findByUsuarioIdAndEstadoPago(usuarioId, "PENDIENTE");
+        List<Compra> compras = compraRepository.findByUsuarioIdAndEstadoPago(usuarioId, EstadoPago.PENDIENTE);
         List<DetalleCompraDTO> pendientes = new ArrayList<>();
         for (Compra c : compras) {
 
@@ -192,6 +203,7 @@ public class CompraService {
     DetalleCompraDTO dto = new DetalleCompraDTO();
 
     // 1. Datos básicos de la compra (usando tus nombres exactos de campos)
+    dto.setId(compra.getId());
     dto.setLocalizador(compra.getLocalizador());
     dto.setEstado(compra.getEstadoPago().toString());
     dto.setFechaCompra(compra.getFechaCompra());
@@ -214,14 +226,38 @@ public class CompraService {
         }
     }
 
-    // 3. Códigos QR de la lista de TICKETS
+    // 3. Listado de TICKETS con QR
     if (compra.getTickets() != null && !compra.getTickets().isEmpty()) {
-        List<String> qrs = compra.getTickets().stream()
-                .map(ticket -> ticket.getCodigoQr())
+        List<TicketDTO> tickets = compra.getTickets().stream()
+                .map(t -> {
+                    String qrUrl = "/api/compras/ticket/" + t.getCodigoQr() + "/qr";
+                    return new TicketDTO(
+                            t.getId(),
+                            t.getCodigoQr(),
+                            qrUrl,
+                            t.getEstadoTicket() == EstadoTicket.USADO
+                    );
+                })
                 .collect(Collectors.toList());
-        dto.setCodigosQr(qrs);
+        dto.setTickets(tickets);
     }
 
     return dto;
 }
+
+    public Long obtenerIdUsuarioPorUsername(String username) {
+        return usuarioRepository.findByUsername(username)
+                .map(Usuario::getId)
+                .orElse(null);
+    }
+
+    public byte[] obtenerImagenQR(String codigo) {
+        String externalUrl = "https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=" + codigo;
+        WebClient webClient = WebClient.create();
+        return webClient.get()
+                .uri(externalUrl)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block(); 
+    }
 }

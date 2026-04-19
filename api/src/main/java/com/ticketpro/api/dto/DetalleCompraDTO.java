@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 public class DetalleCompraDTO {
 
     /* ###### ATRIBUTOS ###### */
+    private Long id;
 
     // ------ Localizador Unico De La Compra ------
     private String localizador;
@@ -50,6 +51,6 @@ public class DetalleCompraDTO {
     // ------ Fecha En La Que Se Realizo La Compra ------
     private LocalDateTime fechaCompra;
 
-    // ------ Matriz Con Los Codigos Qr De Los Tickets Generados ------
-    private List<String> codigosQr;
+    // ------ Listado De Tickets Individuales De La Compra ------
+    private List<TicketDTO> tickets;
 }

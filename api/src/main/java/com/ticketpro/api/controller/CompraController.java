@@ -3,6 +3,7 @@ package com.ticketpro.api.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ticketpro.api.dto.CompraEntradasDTO;
@@ -82,15 +84,34 @@ public class CompraController {
 
     /* ###### ENDPOINTS PARA ADMINISTRACION ###### */
 
-    // ------ Endpoint Para Obtener Las Compras Pendientes De Un Usuario ------
+    // ------ Endpoint Para Obtener Las Compras Pendientes Del Usuario Autenticado ------
     @GetMapping("/pendientes")
-    public ResponseEntity<List<DetalleCompraDTO>> listarPendientes(@RequestParam Long usuarioId) {
-        List<DetalleCompraDTO> pendientes = compraService.obtenerComprasPendientes(usuarioId);
+    public ResponseEntity<List<DetalleCompraDTO>> listarPendientes(
+            @RequestParam(required = false) Long usuarioId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        Long idBusqueda = usuarioId;
+        
+        // Si no se pasa un ID, buscamos el del propio usuario autenticado
+        if (idBusqueda == null && userDetails != null) {
+            idBusqueda = compraService.obtenerIdUsuarioPorUsername(userDetails.getUsername());
+        }
+
+        if (idBusqueda == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        List<DetalleCompraDTO> pendientes = compraService.obtenerComprasPendientes(idBusqueda);
         
         if (pendientes.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
         
         return ResponseEntity.ok(pendientes);
+    }
+
+    @GetMapping(value = "/ticket/{codigo}/qr", produces = MediaType.IMAGE_PNG_VALUE)
+    public @ResponseBody byte[] obtenerQR(@PathVariable String codigo) {
+        return compraService.obtenerImagenQR(codigo);
     }
 }

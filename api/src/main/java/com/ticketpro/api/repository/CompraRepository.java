@@ -20,5 +20,5 @@ public interface CompraRepository extends JpaRepository<Compra, Long> {
     List<Compra> findByUsuarioUsername(String username);
 
     // ------ Filtra Las Compras De Un Usuario Segun Su Estado De Pago ------
-    List<Compra> findByUsuarioIdAndEstadoPago(Long usuarioId, String estadoPago);
+    List<Compra> findByUsuarioIdAndEstadoPago(Long usuarioId, com.ticketpro.api.model.EstadoPago estadoPago);
 }
