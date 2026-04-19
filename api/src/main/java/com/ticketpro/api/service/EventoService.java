@@ -46,6 +46,14 @@ public class EventoService {
                 .collect(Collectors.toList());
     }
 
+    // NUEVO MÉTODO: Buscar eventos por término
+    public List<EventoDTO> buscarEventos(String termino) {
+        List<Evento> eventos = eventoRepository.buscarPorTituloOCiudad(termino);
+        return eventos.stream()
+                .map(this::entityToDto)
+                .collect(Collectors.toList());
+    }
+
     // NUEVO MÉTODO: Obtener categorías únicas
     public List<String> obtenerCategoriasUnicas() {
         return this.listarTodos().stream()

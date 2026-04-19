@@ -53,4 +53,10 @@ public class EventoController {
     public List<String> obtenerCategorias() {
         return eventoService.obtenerCategoriasUnicas();
     }
+
+    // ------ Nuevo Endpoint Buscar Eventos Por Titulo O Ciudad ------
+    @GetMapping("/buscar")
+    public List<EventoDTO> buscarEventos(@RequestParam String termino) {
+        return eventoService.buscarEventos(termino);
+    }
 }
