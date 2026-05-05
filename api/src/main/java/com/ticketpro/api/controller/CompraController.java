@@ -114,4 +114,9 @@ public class CompraController {
     public @ResponseBody byte[] obtenerQR(@PathVariable String codigo) {
         return compraService.obtenerImagenQR(codigo);
     }
+
+    @GetMapping(value = "/ticket/{id}/descargar", produces = MediaType.IMAGE_PNG_VALUE)
+    public @ResponseBody byte[] descargarTicket(@PathVariable Long id) {
+        return compraService.obtenerTicketCompleto(id);
+    }
 }
